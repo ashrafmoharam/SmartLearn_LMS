@@ -38,12 +38,15 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $assignments = [];
+$base_url = "http://localhost/SmartLearn_LMS/uploads/assignments/"; // غيّر حسب المسار الفعلي
+
 while ($row = $result->fetch_assoc()) {
     $assignments[] = [
         'id' => $row['id'],
         'title' => $row['title'],
         'due_date' => $row['due_date'], // YYYY-MM-DD HH:MM:SS
         'pdf_file' => $row['pdf_file'],
+        'file_url' => $row['pdf_file'] ? $base_url . $row['pdf_file'] : '',
         'created_at' => $row['created_at'],
     ];
 }
