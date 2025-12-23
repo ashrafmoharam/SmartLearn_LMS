@@ -1,36 +1,42 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 
-require_once '../db.php';
+include "../db.php"; // ملف الاتصال بقاعدة البيانات
 
-// تحقق من البيانات
-$fullName = $_POST['full_name'] ?? '';
-$phone = $_POST['phone'] ?? '';
-$email = $_POST['personal_email'] ?? '';
-$field = $_POST['field'] ?? '';
-
-if (!isset($_FILES['cv']) || $_FILES['cv']['error'] != 0) {
-    echo json_encode(["status" => "error", "message" => "CV file not uploaded"]);
+// التحقق من الحقول والملف
+if(!isset($_FILES['cv_file']) || !isset($_POST['full_name']) || !isset($_POST['personal_email']) || !isset($_POST['phone'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Missing fields or CV file']);
     exit;
 }
 
-$cvFile = $_FILES['cv'];
-$cvName = time() . "_" . basename($cvFile['name']);
-$targetDir = __DIR__ . "/uploads/";
-if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-$targetFile = $targetDir . $cvName;
+$cv_file = $_FILES['cv_file'];
+$full_name = $_POST['full_name'];
+$personal_email = $_POST['personal_email'];
+$phone = $_POST['phone'];
 
-if (!move_uploaded_file($cvFile['tmp_name'], $targetFile)) {
-    echo json_encode(["status" => "error", "message" => "Failed to save CV file"]);
-    exit;
+// حفظ الملف على السيرفر
+$target_dir = "../../uploads/cvs/";
+if(!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+
+$target_file = $target_dir . basename($cv_file["name"]);
+
+if(move_uploaded_file($cv_file["tmp_name"], $target_file)) {
+    // تسجيل البيانات في جدول instructor_requests
+    $stmt = $conn->prepare("INSERT INTO instructor_requests (full_name, personal_email, phone, cv_file) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssss", $full_name, $personal_email, $phone, $cv_file["name"]);
+
+    if($stmt->execute()) {
+        echo json_encode(['status' => 'success', 'message' => 'CV and data uploaded successfully']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Database error: '.$stmt->error]);
+    }
+
+    $stmt->close();
+} else {
+    echo json_encode(['status' => 'error', 'message' => 'Failed to upload CV']);
 }
 
-// إدخال البيانات في قاعدة البيانات
-$stmt = $pdo->prepare("INSERT INTO instructor_requests (full_name, phone, personal_email, field, cv) VALUES (?, ?, ?, ?, ?)");
-$stmt->execute([$fullName, $phone, $email, $field, $cvName]);
-
-echo json_encode(["status" => "success", "message" => "Request submitted successfully"]);
-?>
+$conn->close();
