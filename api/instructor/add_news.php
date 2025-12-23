@@ -8,9 +8,9 @@ include '../db.php';
 
 $title = trim($_POST['title'] ?? '');
 $content = trim($_POST['content'] ?? '');
-$instructor_id = intval($_POST['instructor_id'] ?? 0);
+$admins_id = intval($_POST['admins_id'] ?? 0);
 
-if ($title === '' || $content === '' || $instructor_id === 0) {
+if ($title === '' || $content === '' || $admins_id === 0) {
     echo json_encode([
         'status' => 'error',
         'message' => 'Missing required fields'
@@ -19,10 +19,10 @@ if ($title === '' || $content === '' || $instructor_id === 0) {
 }
 
 $stmt = $conn->prepare(
-    "INSERT INTO news (instructor_id, title, content, created_at)
+    "INSERT INTO news (admins_id, title, content, created_at)
      VALUES (?, ?, ?, NOW())"
 );
-$stmt->bind_param("iss", $instructor_id, $title, $content);
+$stmt->bind_param("iss", $admins_id, $title, $content);
 
 if ($stmt->execute()) {
     echo json_encode([

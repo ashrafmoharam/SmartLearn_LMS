@@ -10,7 +10,6 @@ USE smartlearn_lms;
 CREATE TABLE admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
-    personal_email VARCHAR(255) NOT NULL UNIQUE,
     university_email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
 );
@@ -45,12 +44,13 @@ CREATE TABLE instructor_requests (
     full_name VARCHAR(255) NOT NULL,
     personal_email VARCHAR(255) NOT NULL,
     phone VARCHAR(50),
-    field VARCHAR(255),
     cv_file VARCHAR(255),
     status ENUM('pending','approved','rejected') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+ALTER TABLE instructor_requests
+ADD COLUMN score INT NULL,
+ADD COLUMN reasons TEXT NULL;
 -- ============================================
 -- جدول الكورسات
 -- ============================================
@@ -120,13 +120,31 @@ CREATE TABLE quiz_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     quiz_id INT NOT NULL,
     question_text TEXT NOT NULL,
-    option_a VARCHAR(255) NOT NULL,
-    option_b VARCHAR(255) NOT NULL,
-    option_c VARCHAR(255),
-    option_d VARCHAR(255),
-    correct_option ENUM('a','b','c','d') NOT NULL,
+    option_A VARCHAR(255) NOT NULL,
+    option_B VARCHAR(255) NOT NULL,
+    option_C VARCHAR(255),
+    option_D VARCHAR(255),
+    correct_option ENUM('A','B','C','D') NOT NULL,
     FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 );
+
+CREATE TABLE quiz_answers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    quiz_id INT NOT NULL,
+    question_id INT NOT NULL,
+    student_id INT NOT NULL,
+
+    selected_option CHAR(1) NOT NULL, -- A / B / C / D
+    is_correct TINYINT(1) DEFAULT NULL,
+
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 
 -- ============================================
 -- جدول نتائج الاختبارات (Quiz Submissions)
@@ -146,11 +164,11 @@ CREATE TABLE quiz_submissions (
 -- ============================================
 CREATE TABLE news (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    instructor_id INT NOT NULL,
+    admins_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE CASCADE
+    FOREIGN KEY (admins_id) REFERENCES admins(id) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -164,3 +182,5 @@ CREATE TABLE student_courses (
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
+
+
