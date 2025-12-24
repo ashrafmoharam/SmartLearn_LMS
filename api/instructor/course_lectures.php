@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 include_once __DIR__ . '/../db.php';
 
 // عنوان السيرفر أو الـ IP + مسار uploads
-$base_url = "http://192.168.1.3/SmartLearn_LMS/uploads/lectures/"; 
+$base_url = "http://localhost/SmartLearn_LMS/uploads/lectures/"; 
 
 $course_id = $_GET['course_id'] ?? '';
 if (!$course_id) {
